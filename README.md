@@ -1,3 +1,3 @@
 # engine_template_csharp
 
-Skeleton for starting a new C# project
+Musings on using Postgres to save a resource hierarchy
