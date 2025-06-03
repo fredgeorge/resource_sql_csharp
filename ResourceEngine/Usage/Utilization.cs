@@ -27,6 +27,11 @@ public class Utilization {
         left._duration,
         left._pattern + right._pattern);
 
+    public Utilization Fold(TimeSpan duration) {
+        _state = new Folded(this, duration);
+        return this;
+    }
+
     private interface State {
         int Max(Utilization u);
         double Average(Utilization u);
@@ -37,6 +42,21 @@ public class Utilization {
         private Initial() { }
         public int Max(Utilization u) => u._pattern.Max();
         public double Average(Utilization u) => u._pattern.Average();
+    }
+
+    private class Folded : State {
+        private readonly Utilization _utilization;
+        private readonly int _foldedCount;
+        private readonly OccupationPattern _foldedPattern;
+        public Folded(Utilization utilization, TimeSpan duration) {
+            _utilization = utilization;
+            _foldedCount = (int)Math.Ceiling(duration / utilization._interval);
+            _foldedPattern = utilization._pattern.Fold(_foldedCount);
+        }
+
+        public int Max(Utilization u) => _foldedPattern.Max();
+
+        public double Average(Utilization u) => _foldedPattern.Average();
     }
 
     private class OccupationPattern {
@@ -59,14 +79,17 @@ public class Utilization {
             .Select(tuple => tuple.First + tuple.Second)
             .ToList());
 
-        private IEnumerable<List<int>> Split(IList<int> source, int n) {
+        internal OccupationPattern Fold(int count) => 
+            Split(count).Aggregate((result, counts) => result + counts);
+
+        private IEnumerable<OccupationPattern> Split(int n) {
             ArgumentOutOfRangeException.ThrowIfNegativeOrZero(n);
-            var size = (int)Math.Ceiling(source.Count / (double)n);
+            var size = (int)Math.Ceiling(_occupancyCounts.Count / (double)n);
             // if (source.Count % n != 0)
             //     throw new ArgumentException("List length must be divisible by n.");
 
-            for (var i = 0; i < source.Count; i += size)
-                yield return source.Skip(i).Take(size).ToList();
+            for (var i = 0; i < _occupancyCounts.Count; i += size)
+                yield return new OccupationPattern(_occupancyCounts.Skip(i).Take(size).ToList());
         }
     }
 }

@@ -26,7 +26,6 @@ public class UtilizationTest {
 
     [Fact]
     public void Fold() {
-        
         var u = new Utilization(1.May(), 2.Days(), [0,1,1,0,0,0,1,0]);
         u.Fold(24.Hours());
         Assert.Equal(2, u.Max());
